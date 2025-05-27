@@ -14,9 +14,7 @@ import java.time.LocalDateTime;
 public class DHT11Data {
     @Id
     private String id;
-
     private Double temperatura;
     private Double umidade;
-
     private LocalDateTime dataHora;
 }
