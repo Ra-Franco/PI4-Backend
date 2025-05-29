@@ -28,7 +28,7 @@ public class AuthController {
     private JwtTokenProvider tokenProvider;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user) { // Aceita User diretamente
+    public ResponseEntity<?> registerUser(@RequestBody User user) {
         try {
             User registeredUser = userService.register(user);
             return ResponseEntity.status(HttpStatus.CREATED).body("Usuário registrado com sucesso!");
@@ -39,6 +39,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {
+        System.out.println(loginRequest);
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.username(),

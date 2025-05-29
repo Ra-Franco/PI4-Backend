@@ -1,8 +1,6 @@
-package com.pi.airsense.config.security; // Ou o pacote que você escolheu
+package com.pi.airsense.config.security;
 
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -10,7 +8,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 
 @Component
@@ -33,43 +32,40 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
-
         return Jwts.builder()
-                .subject(username)
-                .issuedAt(now)
-                .expiration(expiryDate)
-                .signWith(key, SignatureAlgorithm.HS512)
+                .setHeaderParam("typ", "JWT")
+                .setSubject(username)
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(SignatureAlgorithm.HS256, jwtSecret.getBytes(StandardCharsets.UTF_8))
                 .compact();
     }
 
     public String getUsernameFromJWT(String token) {
-        SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
-
         Claims claims = Jwts.parser()
-                .verifyWith(key)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
+                .setSigningKey(jwtSecret.getBytes(StandardCharsets.UTF_8))
+                .parseClaimsJws(token)
+                .getBody();
 
         return claims.getSubject();
     }
 
     public boolean validateToken(String authToken) {
         try {
-            SecretKey key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
-            Jwts.parser().verifyWith(key).build().parseSignedClaims(authToken);
+            Jwts.parser()
+                    .setSigningKey(jwtSecret.getBytes(StandardCharsets.UTF_8))
+                    .parseClaimsJws(authToken);
             return true;
+        } catch (SignatureException ex) {
+            logger.error("Assinatura JWT inválida: {}", ex.getMessage());
         } catch (MalformedJwtException ex) {
-            logger.error("Token JWT inválido: {}", ex.getMessage());
+            logger.error("Token JWT malformado: {}", ex.getMessage());
         } catch (ExpiredJwtException ex) {
             logger.error("Token JWT expirado: {}", ex.getMessage());
         } catch (UnsupportedJwtException ex) {
             logger.error("Token JWT não suportado: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
-            logger.error("Claims JWT vazias: {}", ex.getMessage());
-        } catch (Exception ex) {
-            logger.error("Erro na validação do token JWT: {}", ex.getMessage());
+            logger.error("Token JWT vazio: {}", ex.getMessage());
         }
         return false;
     }
