@@ -2,7 +2,7 @@ package com.pi.airsense.controller;
 
 // ... outros imports (UserService, AuthenticationManager, JwtTokenProvider, User, LoginRequest)
 import com.pi.airsense.config.security.JwtTokenProvider;
-import com.pi.airsense.model.LoginRequest;
+import com.pi.airsense.model.dto.LoginRequest;
 import com.pi.airsense.model.User;
 import com.pi.airsense.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;

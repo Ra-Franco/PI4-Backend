@@ -14,8 +14,6 @@ import java.time.LocalDateTime;
 public class MQ9Data {
     @Id
     private String id;
-
     private Double ppm;
-
     private LocalDateTime dataHora;
 }
