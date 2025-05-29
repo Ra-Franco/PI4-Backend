@@ -69,7 +69,58 @@ public class DHT11Controller {
         return ResponseEntity.ok(tempData);
     }
 
+    @GetMapping("/mes-temp")
+    public ResponseEntity<List<TempDTO>> listarTemperaturasPorSemana(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim
+    ) {
+        List<DHT11Data> dados = (inicio != null && fim != null)
+                ? service.buscarPorIntervalo(inicio, fim)
+                : service.listarTodos();
+        dados = DataUtil.filtrarComDataValida(dados, DHT11Data::getDataHora);
+        List<TempDTO> tempData = dados.stream()
+                .collect(Collectors.groupingBy(
+                        d -> "Sem" + DataUtil.getSemanaDoMes(d.getDataHora()),
+                        LinkedHashMap::new,
+                        Collectors.averagingDouble(DHT11Data::getTemperatura)
+                ))
+                .entrySet().stream()
+                .map(entry -> new TempDTO(entry.getKey(), entry.getValue()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(tempData);
+    }
+
     @GetMapping("/semana-umidade")
+    public ResponseEntity<List<UmidadeDTO>> listarUmidadePorDiaSemana(
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fim
+    ) {
+        List<DHT11Data> dados = (inicio != null && fim != null)
+                ? service.buscarPorIntervalo(inicio, fim)
+                : service.listarTodos();
+        dados = DataUtil.filtrarComDataValida(dados, DHT11Data::getDataHora);
+        List<UmidadeDTO> tempData = dados.stream()
+                .collect(Collectors.groupingBy(
+                        d -> d.getDataHora().getDayOfWeek(),
+                        LinkedHashMap::new,
+                        Collectors.averagingDouble(DHT11Data::getTemperatura)
+                ))
+                .entrySet().stream()
+                .map(entry -> new UmidadeDTO(
+                        DataUtil.formatarDiaSemana(entry.getKey()),
+                        entry.getValue()
+                ))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(tempData);
+    }
+
+
+    @GetMapping("/mes-umidade")
     public ResponseEntity<List<UmidadeDTO>> listarUmidadePorSemana(
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime inicio,
