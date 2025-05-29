@@ -23,6 +23,11 @@ public class SecurityConfig {
 
     private final UserService userService;
 
+    private static final String[] SWAGGER_WHITELIST = {
+            "/swagger-ui/**",
+            "/v3/**"
+    };
+
     public SecurityConfig(JwtTokenProvider tokenProvider, UserService userService) {
         this.tokenProvider = tokenProvider;
         this.userService = userService;
@@ -64,6 +69,7 @@ public class SecurityConfig {
                 .cors(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(SWAGGER_WHITELIST).permitAll()
                         .requestMatchers("/auth/**", "/dht11/**", "/mq9/**").permitAll()
                         .anyRequest().authenticated()
                 )
